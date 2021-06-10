@@ -1,0 +1,48 @@
+name: Release
+
+on: push
+
+env:
+  DISABLE_AMEND_COVERAGE_FROM_SRC: no
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-18.04
+
+    strategy:
+      fail-fast: false
+      matrix:
+        julia-version: ['1.5.0']
+
+    steps:
+    - uses: actions/checkout@v2
+    - uses: julia-actions/setup-julia@v1
+      with:
+        version: ${{ matrix.julia-version }}
+
+    - name: Install Dependence for Julia
+      run: |
+        using Pkg
+        Pkg.activate(".")
+        Pkg.instantiate()
+        Pkg.add("Coverage")
+      shell: julia {0}
+
+    - name: Test
+      run: |
+        julia --project=. --code-coverage test/runtests.jl
+
+     - name: Generate LOCV file
+       run: |
+         using Coverage
+         LCOV.writefile("lcov.info", process_folder("src"))
+       shell: julia --project=. {0}
+    
+     - name: Coveralls
+       uses: coverallsapp/github-action@master
+       with:
+         github-token: ${{ secrets.GITHUB_TOKEN }}
+         path-to-lcov: "./lcov.info"
+##END-FOR-RELEASE
