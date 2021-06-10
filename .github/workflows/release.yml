@@ -34,15 +34,15 @@ jobs:
       run: |
         julia --project=. --code-coverage test/runtests.jl
 
-     - name: Generate LOCV file
-       run: |
-         using Coverage
-         LCOV.writefile("lcov.info", process_folder("src"))
-       shell: julia --project=. {0}
-    
-     - name: Coveralls
-       uses: coverallsapp/github-action@master
-       with:
-         github-token: ${{ secrets.GITHUB_TOKEN }}
-         path-to-lcov: "./lcov.info"
+    - name: Generate LOCV file
+      run: |
+        using Coverage
+        LCOV.writefile("lcov.info", process_folder("src"))
+      shell: julia --project=. {0}
+    #
+    - name: Coveralls
+      uses: coverallsapp/github-action@master
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        path-to-lcov: "./lcov.info"
 ##END-FOR-RELEASE
