@@ -1,0 +1,2 @@
+#!/bin/bash
+$HOME/julia-1.1.1/bin/julia -p $np -L dp.jl multi-experiments.jl $nrep $parent_folder
