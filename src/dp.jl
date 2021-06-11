@@ -26,7 +26,8 @@ function truth_coverage(X::Array{Array{Array{Int64, 1}, 1}, 1}, M::Array{Array{I
     f = length(X)
     ans = zeros(Bool, f-1)
     for i = 1:f-1
-        D = varmincost(X[i], X[i+1]; kw...)
+        # D = varmincost(X[i], X[i+1]; kw...)
+        D = varmincost2(X[i], X[i+1]; kw...) # method2
         if M[i] in D
             ans[i] = 1
         end
@@ -760,6 +761,104 @@ function mincost2(X1::Array{Array{Int64, 1}, 1}, X2::Array{Array{Int64, 1}, 1}, 
 end
 
 mincost(X1::Array{Array{Int64, 1}, 1}, X2::Array{Array{Int64, 1}, 1}; kw...) = mincost2(X1, X2, -1; kw...)
+
+
+"""
+    varmincost2(m)
+
+Enumerate the variants of the matching `m` by exchanging two points except for the disappeared cells. [??to clarify]
+"""
+function varmincost2(m::Array{Int64, 1})
+    idx = m .!= -1
+    subm = m[idx]
+    n = length(subm)
+    cases = collect(combinations(1:n, 2))
+    varms = Array{Array{Int64, 1}, 1}(undef, length(cases)+1)
+    for i = 1:length(cases)
+        l1, l2 = cases[i]
+        # swap
+        varsubm = copy(subm)
+        varsubm[l2] = subm[l1]
+        varsubm[l1] = subm[l2]
+        varms[i] = copy(m)
+        varms[i][idx] .= varsubm
+    end
+    varms[length(cases)+1] = copy(m)
+    return unique(varms)
+end
+
+# k-nearest exchange
+"""
+    varmincost2(X, m)
+
+For each non-disappeared cells, exchange it withh its `k` nearest neighbors to get the variants.
+"""
+function varmincost2(X::Array{Array{Int64, 1}, 1}, m::Array{Int64, 1}; k::Int = 4)
+    # the disappear/appear is determined by the number
+    idx = m .!= -1
+    varms = Array{Array{Int64, 1}, 1}(undef, 0)
+    for i = 1:sum(idx)
+        dist = [sum((X[idx][i] - x) .^ 2) for x in X[idx]]
+        # find the k-nearest (except itself)
+        k = min(k, sum(idx)-1)
+        idx_knear = sortperm(dist)[1:k+1]
+        for j = 1:k+1
+            if idx_knear[j] == i
+                continue
+            end
+            # exchange i & idx_knear[j]
+            m_tmp = copy(m)
+            # m_tmp[idx][i] = m[idx][idx_knear[j]]
+            # m_tmp[idx][idx_knear[j]] = m[idx][i]
+            idx_true = findall(idx)
+            m_tmp[idx_true[i]] = m[idx][idx_knear[j]]
+            m_tmp[idx_true[idx_knear[j]]] = m[idx][i]
+            push!(varms, m_tmp)
+        end
+    end
+    # no exchange
+    push!(varms, m)
+    return unique(varms)
+end
+
+"""
+    varmincost2(X1, X2)
+
+Enumerate the variants of min-cost flow matching by the number of disappeared cells,
+which ranges from `0` to `max_ndisappear`.
+
+If `flexible = true`, then `max_ndisappear` default equals to the number of cells in `X1`,
+otherwise, it equals to the number of disappeared cells return by the pure mincost.
+"""
+function varmincost2(X1::Array{Array{Int64, 1}, 1}, X2::Array{Array{Int64, 1},1};
+                                                        max_ndisappear::Int = length(X1),
+                                                        flexible::Bool = true,
+                                                        knearest = true, δ = 1, kw...)
+    # if flexible
+    #     # number of disappear in the pure mincost
+    #     maxn = min(sum(mincost2(X1, X2, -1; kw...) .== -1) + 1, length(X1), length(X2))
+    # else
+    #     maxn = min(length(X1), length(X2), max_ndisappear)
+    # end
+    d_star = sum(mincost2(X1, X2, -1) .== -1)
+    varms = Array{Array{Int64, 1}, 1}(undef, 0)
+    n1 = length(X1)
+    n2 = length(X2)
+    for i = max(0, d_star-δ, n1 - n2):min(d_star+δ, n1)
+#    for i = min(d_star + 1, n1)
+#    for i = max(0, d_star-δ, n1 - n2)
+#    for i = d_star
+        m = mincost2(X1, X2, i)
+        # permutate except the disappear/appear
+        if knearest
+            append!(varms, varmincost2(X1, m))
+        else
+            append!(varms, varmincost2(m))
+        end
+    end
+    return unique(varms) # possible no need to use unique
+end
+
 
 """
     match_by_mincost(X)

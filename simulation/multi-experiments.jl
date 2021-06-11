@@ -43,30 +43,23 @@ end
             # matched based on prior max method
             for δ = 0:3
                 exec_times[δ+2] = @elapsed begin
-                #m, D = bottom_up_match_optim(X, D2A=true, D2Ae=false, method="prior_max",
-                #    σ = σ, ns=100, method2=true, case_study=true, θ=σ/2, knearest=false, δ = δ)
-                m = bottom_up_match_optim2(X, D2A=true, D2Ae=false, method="prior_max",
-                                                σ = σ, ns=100, method2=true, case_study=false, θ=σ/2, knearest=false, δ = δ, robust = 1, history = false);
+                m = bottom_up_match_optim2(X, method="prior_max",
+                                           σ = σ, ns=100,
+                                           δ = δ, robust = 1,
+                                           history = false);
                 end
-                mhat = bottom_up_match_optim2(X, σs, D2A=true, D2Ae=false, method="prior_max",
-                                                ns=100, method2=true, case_study=false, θ=σ/2, knearest=false, δ = δ, robust = 1, history = false);
-                isfallin[:, 1+δ+1] = truth_coverage(X, M, D2A=true, D2Ae=false, method="prior_max",
-                    σ = σ, ns=100, method2=true, case_study=true, θ=σ/2, knearest=false, δ = δ);
+                mhat = bottom_up_match_optim2(X, σs, method="prior_max",
+                                              ns=100, δ = δ,
+                                              robust = 1,
+                                              history = false);
+                isfallin[:, 1+δ+1] = truth_coverage(X, M,
+                                                    method="prior_max",
+                                                    σ = σ, ns = 100,
+                                                    method2=true,
+                                                    knearest=false,
+                                                    δ = δ);
                 acc[:, 1+2δ+1] = acc2fβ(calc_path_accuracy_point(m, M, length.(X)))
                 acc[:, 1+2δ+2] = acc2fβ(calc_path_accuracy_point(mhat, M, length.(X)))
-                # m, D = bottom_up_match_optim(X, D2A=true, D2Ae=false, method="prior_max",
-                #     σ = 2σ, ns=100, method2=true, case_study=true, θ=σ/2, knearest=false, δ = δ)
-                # m = bottom_up_match_optim2(X, D2A=true, D2Ae=false, method="prior_max",
-                #                                 σ = 2σ, ns=100, method2=true, case_study=false, θ=σ/2, knearest=false, δ = 0, robust = 1, history = false);
-                # acc[:, 1+4δ+2] = acc2fβ(calc_path_accuracy_point(m, M, length.(X)))
-
-                # # sigma hat
-                # m, D = bottom_up_match_optim(X, σs, D2A=true, D2Ae=false, method="prior_max",
-                #     ns=100, method2=true, case_study=true, θ=σ/2, knearest=false, δ = δ)
-                # acc[:, 1+4δ+3] = acc2fβ(calc_path_accuracy_point(m, M, length.(X)))
-                # m, D = bottom_up_match_optim(X, 2σs, D2A=true, D2Ae=false, method="prior_max",
-                #     ns=100, method2=true, case_study=true, θ=σ/2, knearest=false, δ = δ)
-                # acc[:, 1+4δ+4] = acc2fβ(calc_path_accuracy_point(m, M, length.(X)))
             end
         end
         @save "$(folder)/$(nrep)_XM_$(n)_$(σ).jld2" X M
@@ -82,9 +75,6 @@ end
 nrep, parent_folder = ARGS
 @async make_jobs(collect(15:5:50),
                  collect(1:4))
-# timestamp = Dates.now()
-# folder = "data_$(nf)_$(nr)_$(zoom)_$(timestamp)"
-# mkdir(folder)
 
 for p in workers()
     remote_do(do_work, p, jobs, res, parent_folder, nrep; adaptive = true)

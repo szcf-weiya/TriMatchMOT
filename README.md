@@ -1,6 +1,6 @@
 # Tripartite Matching
 
-![CI](https://github.com/szcf-weiya/TriMatchMOT/workflows/release.yml/badge.svg) [![Coverage Status](https://coveralls.io/repos/github/szcf-weiya/TriMatchMOT/badge.svg?t=B7XUTs)](https://coveralls.io/github/szcf-weiya/TriMatchMOT)
+[![Release](https://github.com/szcf-weiya/TriMatchMOT/actions/workflows/release.yml/badge.svg)](https://github.com/szcf-weiya/TriMatchMOT/actions/workflows/release.yml) [![Coverage Status](https://coveralls.io/repos/github/szcf-weiya/TriMatchMOT/badge.svg?branch=master&t=fVonf3)](https://coveralls.io/github/szcf-weiya/TriMatchMOT?branch=master)
 
 This is the official source code for the paper,
 
